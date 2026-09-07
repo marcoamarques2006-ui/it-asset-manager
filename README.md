@@ -41,6 +41,16 @@ API disponível em `http://localhost:8000`. Docs automáticas (Swagger)
 em `http://localhost:8000/docs`. Frontend disponível em
 `http://localhost:3000`.
 
+**Antes de rodar `make migrate`**, os endpoints que tocam o banco
+(ex.: `GET /api/v1/devices`) retornam 500 — as tabelas ainda não
+existem. Isso é esperado, não é bug.
+
+Na primeira vez que sobe (`make up`), o container do frontend roda
+`bun install` sozinho antes de subir o dev server — leva alguns
+minutos e não tem progresso visível na tela por um tempo. Não
+interrompa; é `docker compose logs -f frontend` pra acompanhar se
+quiser confirmar que está avançando.
+
 Rodar os testes do backend:
 
 ```bash
@@ -52,6 +62,11 @@ Rodar os testes do frontend (Vitest + Testing Library):
 ```bash
 docker compose exec frontend bun run test
 ```
+
+Testes de frontend ficam em `frontend/src/test/` (ou colocados perto
+do componente, fora de `src/routes/`). O roteador do TanStack Start
+escaneia todo `.tsx` dentro de `routes/` como candidato a rota — um
+`*.test.tsx` ali dispara um warning no dev server.
 
 Criar uma nova migration depois de alterar um modelo:
 
