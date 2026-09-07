@@ -1,0 +1,12 @@
+# Normaliza para LF independente do core.autocrlf de cada máquina —
+# evita diffs de line-ending e mantém local/CI/Docker (Linux) consistentes.
+* text=auto eol=lf
+
+# Binários: nunca tocar.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.woff2 binary

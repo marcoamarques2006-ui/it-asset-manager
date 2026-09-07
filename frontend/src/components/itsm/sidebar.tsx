@@ -24,7 +24,11 @@ const groups: { label?: string; items: Item[] }[] = [
     items: [
       { title: "Painel", url: "/", icon: LayoutDashboard },
       { title: "Chamados", url: "/chamados", icon: LifeBuoy },
-      { title: "Vulnerabilidades", url: "/vulnerabilidades", icon: ShieldAlert },
+      {
+        title: "Vulnerabilidades",
+        url: "/vulnerabilidades",
+        icon: ShieldAlert,
+      },
       { title: "Ativos", url: "/ativos", icon: Server },
       { title: "Softwares", url: "/softwares", icon: PackageSearch },
       { title: "Aprovações", url: "/aprovacoes", icon: CheckSquare },
@@ -105,7 +109,9 @@ export function ItsmSidebar() {
                       )}
                     >
                       <item.icon className="size-4 shrink-0" />
-                      {!collapsed && <span className="truncate">{item.title}</span>}
+                      {!collapsed && (
+                        <span className="truncate">{item.title}</span>
+                      )}
                     </Link>
                   </li>
                 );

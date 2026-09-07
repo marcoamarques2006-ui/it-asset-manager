@@ -21,7 +21,9 @@ export function ItsmLayout({
             Minha Organização
             <ChevronDown className="size-3.5" />
           </button>
-          <span className="text-sm text-muted-foreground">{breadcrumb ?? title}</span>
+          <span className="text-sm text-muted-foreground">
+            {breadcrumb ?? title}
+          </span>
           <div className="ml-auto flex items-center gap-3">
             <Search className="size-4 text-muted-foreground" />
             <span className="grid size-7 place-items-center rounded-md bg-success-soft text-xs font-semibold text-success">
@@ -30,7 +32,9 @@ export function ItsmLayout({
           </div>
         </header>
         <main className="flex-1 p-5">
-          <h1 className="mb-4 text-base font-semibold text-foreground">{title}</h1>
+          <h1 className="mb-4 text-base font-semibold text-foreground">
+            {title}
+          </h1>
           {children}
         </main>
       </div>

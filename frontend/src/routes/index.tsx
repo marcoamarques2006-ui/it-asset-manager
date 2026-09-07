@@ -65,11 +65,36 @@ const install = [
 ];
 
 const tickets = [
-  { id: "INC-4821", title: "VPN instável na filial Recife", pri: "Crítico", sla: "1h 12m" },
-  { id: "REQ-1180", title: "Provisionar notebook — novo colaborador", pri: "Moderado", sla: "1d 4h" },
-  { id: "INC-4817", title: "Impressora do 3º andar offline", pri: "Importante", sla: "6h 30m" },
-  { id: "REQ-1175", title: "Acesso ao ERP — perfil financeiro", pri: "Moderado", sla: "2d" },
-  { id: "INC-4805", title: "Lentidão no e-mail corporativo", pri: "Importante", sla: "3h 05m" },
+  {
+    id: "INC-4821",
+    title: "VPN instável na filial Recife",
+    pri: "Crítico",
+    sla: "1h 12m",
+  },
+  {
+    id: "REQ-1180",
+    title: "Provisionar notebook — novo colaborador",
+    pri: "Moderado",
+    sla: "1d 4h",
+  },
+  {
+    id: "INC-4817",
+    title: "Impressora do 3º andar offline",
+    pri: "Importante",
+    sla: "6h 30m",
+  },
+  {
+    id: "REQ-1175",
+    title: "Acesso ao ERP — perfil financeiro",
+    pri: "Moderado",
+    sla: "2d",
+  },
+  {
+    id: "INC-4805",
+    title: "Lentidão no e-mail corporativo",
+    pri: "Importante",
+    sla: "3h 05m",
+  },
 ];
 
 const priTone: Record<string, string> = {
@@ -131,13 +156,14 @@ function Gauge({
   );
 }
 
-function Matrix({
-  rows,
-}: {
-  rows: { label: string; cells: number[] }[];
-}) {
+function Matrix({ rows }: { rows: { label: string; cells: number[] }[] }) {
   const heads = ["Em atraso", "1-7 dias", "8-30 dias", "31+ dias"];
-  const tones = ["bg-success-soft", "bg-warning-soft", "bg-surface", "bg-surface"];
+  const tones = [
+    "bg-success-soft",
+    "bg-warning-soft",
+    "bg-surface",
+    "bg-surface",
+  ];
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
@@ -153,7 +179,9 @@ function Matrix({
       <tbody>
         {rows.map((row) => (
           <tr key={row.label}>
-            <td className="pr-3 text-right text-sm text-foreground">{row.label}</td>
+            <td className="pr-3 text-right text-sm text-foreground">
+              {row.label}
+            </td>
             {row.cells.map((cell, i) => (
               <td
                 key={i}
@@ -179,7 +207,9 @@ function Dashboard() {
               <div key={item.label} className="flex items-center gap-3">
                 <item.icon className="size-8 text-brand" strokeWidth={1.6} />
                 <div>
-                  <p className="text-xl font-semibold text-foreground">{item.value}</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {item.value}
+                  </p>
                   <p className="text-xs text-muted-foreground">{item.label}</p>
                 </div>
               </div>
@@ -191,9 +221,13 @@ function Dashboard() {
           <div className="grid grid-cols-2 gap-5">
             {endpoints.map((e) => (
               <div key={e.label} className="flex items-stretch gap-3">
-                <span className={`w-1.5 shrink-0 rounded-full ${toneBar[e.tone]}`} />
+                <span
+                  className={`w-1.5 shrink-0 rounded-full ${toneBar[e.tone]}`}
+                />
                 <div>
-                  <p className="text-xl font-semibold text-foreground">{e.value}</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {e.value}
+                  </p>
                   <p className="text-xs text-muted-foreground">{e.label}</p>
                 </div>
               </div>
@@ -208,7 +242,9 @@ function Dashboard() {
           <div className="flex flex-wrap items-center gap-6">
             <Gauge value={175} caption="a remediar" overdue={135} soon={40} />
             <ul className="min-w-48 flex-1 space-y-2 border-l border-border pl-5 text-sm text-foreground">
-              <li className="text-xs font-medium text-muted-foreground">SLA definido:</li>
+              <li className="text-xs font-medium text-muted-foreground">
+                SLA definido:
+              </li>
               <li>Crítico em 7 dias</li>
               <li>Alto em 15 dias</li>
               <li>Moderado em 30 dias</li>
@@ -221,11 +257,16 @@ function Dashboard() {
           <Matrix rows={remediate} />
         </Panel>
 
-        <Panel title="SLA de atualizações" action={<Settings className="size-4 text-brand" />}>
+        <Panel
+          title="SLA de atualizações"
+          action={<Settings className="size-4 text-brand" />}
+        >
           <div className="flex flex-wrap items-center gap-6">
             <Gauge value={60} caption="a instalar" overdue={22} soon={38} />
             <ul className="min-w-48 flex-1 space-y-2 border-l border-border pl-5 text-sm text-foreground">
-              <li className="text-xs font-medium text-muted-foreground">SLA definido:</li>
+              <li className="text-xs font-medium text-muted-foreground">
+                SLA definido:
+              </li>
               <li>Crítico em 7 dias</li>
               <li>Alto em 15 dias</li>
               <li>Moderado em 30 dias</li>
@@ -250,7 +291,10 @@ function Dashboard() {
             </thead>
             <tbody>
               {tickets.map((t) => (
-                <tr key={t.id} className="border-b border-border/70 last:border-0">
+                <tr
+                  key={t.id}
+                  className="border-b border-border/70 last:border-0"
+                >
                   <td className="py-2.5 font-medium text-brand">{t.id}</td>
                   <td className="py-2.5 text-foreground">{t.title}</td>
                   <td className="py-2.5">
@@ -260,7 +304,9 @@ function Dashboard() {
                       {t.pri}
                     </span>
                   </td>
-                  <td className="py-2.5 text-right text-muted-foreground">{t.sla}</td>
+                  <td className="py-2.5 text-right text-muted-foreground">
+                    {t.sla}
+                  </td>
                 </tr>
               ))}
             </tbody>
