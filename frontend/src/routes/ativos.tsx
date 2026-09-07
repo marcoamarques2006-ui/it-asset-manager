@@ -1,19 +1,128 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/itsm/placeholder";
+import { useQuery } from "@tanstack/react-query";
+
+import { ItsmLayout, Panel } from "@/components/itsm/layout";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { fetchDevices, type DeviceStatus, type DeviceType } from "@/lib/api";
 
 export const Route = createFileRoute("/ativos")({
   head: () => ({
     meta: [
       { title: "Ativos — Servia ITSM" },
-      { name: "description", content: "Ativos da operação de TI na plataforma Servia ITSM." },
+      {
+        name: "description",
+        content: "Ativos da operação de TI na plataforma Servia ITSM.",
+      },
       { property: "og:title", content: "Ativos — Servia ITSM" },
-      { property: "og:description", content: "Ativos da operação de TI na plataforma Servia ITSM." },
+      {
+        property: "og:description",
+        content: "Ativos da operação de TI na plataforma Servia ITSM.",
+      },
     ],
   }),
-  component: () => (
-    <PlaceholderPage
-      title="Ativos"
-      description="Esta área ainda está em construção. Diga o que deseja ver aqui e eu monto a tela."
-    />
-  ),
+  component: AtivosPage,
 });
+
+const tipoLabel: Record<DeviceType, string> = {
+  desktop: "Desktop",
+  notebook: "Notebook",
+  servidor: "Servidor",
+  impressora: "Impressora",
+  monitor: "Monitor",
+  outro: "Outro",
+};
+
+const statusLabel: Record<DeviceStatus, string> = {
+  em_uso: "Em uso",
+  estoque: "Estoque",
+  manutencao: "Manutenção",
+  baixado: "Baixado",
+};
+
+const statusVariant: Record<
+  DeviceStatus,
+  "default" | "secondary" | "outline" | "destructive"
+> = {
+  em_uso: "default",
+  estoque: "secondary",
+  manutencao: "outline",
+  baixado: "destructive",
+};
+
+function AtivosPage() {
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["devices"],
+    queryFn: fetchDevices,
+  });
+
+  return (
+    <ItsmLayout title="Ativos" breadcrumb="Ativos">
+      <Panel title="Dispositivos">
+        {isLoading && (
+          <p className="text-sm text-muted-foreground">Carregando ativos…</p>
+        )}
+
+        {isError && (
+          <p className="text-sm text-critical">
+            {error instanceof Error
+              ? error.message
+              : "Erro ao carregar ativos."}
+          </p>
+        )}
+
+        {!isLoading && !isError && data?.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Nenhum ativo cadastrado.
+          </p>
+        )}
+
+        {!isLoading && !isError && data && data.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Hostname</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Fabricante/Modelo</TableHead>
+                <TableHead>Serial</TableHead>
+                <TableHead>Localização</TableHead>
+                <TableHead>Responsável</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((device) => (
+                <TableRow key={device.id}>
+                  <TableCell className="font-medium text-foreground">
+                    {device.hostname}
+                  </TableCell>
+                  <TableCell>{tipoLabel[device.tipo]}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant[device.status]}>
+                      {statusLabel[device.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {[device.fabricante, device.modelo]
+                      .filter(Boolean)
+                      .join(" ") || "—"}
+                  </TableCell>
+                  <TableCell>{device.serial_number ?? "—"}</TableCell>
+                  <TableCell>{device.localizacao ?? "—"}</TableCell>
+                  <TableCell>{device.usuario_responsavel ?? "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
+    </ItsmLayout>
+  );
+}
