@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Pencil, Plus } from "lucide-react";
+import { useState } from "react";
 
+import { DeviceFormDialog } from "@/components/itsm/device-form-dialog";
 import { ItsmLayout, Panel } from "@/components/itsm/layout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,7 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchDevices, type DeviceStatus, type DeviceType } from "@/lib/api";
+import {
+  fetchDevices,
+  type Device,
+  type DeviceStatus,
+  type DeviceType,
+} from "@/lib/api";
 
 export const Route = createFileRoute("/ativos")({
   head: () => ({
@@ -63,9 +72,31 @@ function AtivosPage() {
     queryFn: fetchDevices,
   });
 
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingDevice, setEditingDevice] = useState<Device | undefined>(
+    undefined,
+  );
+
+  function openCreateForm() {
+    setEditingDevice(undefined);
+    setFormOpen(true);
+  }
+
+  function openEditForm(device: Device) {
+    setEditingDevice(device);
+    setFormOpen(true);
+  }
+
   return (
     <ItsmLayout title="Ativos" breadcrumb="Ativos">
-      <Panel title="Dispositivos">
+      <Panel
+        title="Dispositivos"
+        action={
+          <Button size="sm" onClick={openCreateForm}>
+            <Plus /> Novo ativo
+          </Button>
+        }
+      >
         {isLoading && (
           <p className="text-sm text-muted-foreground">Carregando ativos…</p>
         )}
@@ -95,6 +126,7 @@ function AtivosPage() {
                 <TableHead>Serial</TableHead>
                 <TableHead>Localização</TableHead>
                 <TableHead>Responsável</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,12 +149,28 @@ function AtivosPage() {
                   <TableCell>{device.serial_number ?? "—"}</TableCell>
                   <TableCell>{device.localizacao ?? "—"}</TableCell>
                   <TableCell>{device.usuario_responsavel ?? "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Editar ${device.hostname}`}
+                      onClick={() => openEditForm(device)}
+                    >
+                      <Pencil />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </Panel>
+
+      <DeviceFormDialog
+        device={editingDevice}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+      />
     </ItsmLayout>
   );
 }
