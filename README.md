@@ -34,19 +34,28 @@ Quando for integrar uma tela real (ex.: `ativos.tsx`) ao backend:
 O projeto está migrando do backend FastAPI+Postgres+Docker (abaixo)
 para uma arquitetura serverless: Supabase (Postgres gerenciado + Auth +
 PostgREST + Realtime) com deploy do frontend na Vercel. **Essa migração
-ainda não está completa** — o FastAPI continua sendo o backend "de
-verdade" até a troca ser validada ponta a ponta (frontend ainda fala
-com a API local, não com o Supabase).
+ainda não está completa** — o FastAPI continua existindo e coberto
+pelo CI até a troca ser validada em todas as telas.
 
-O que já existe em `supabase/`:
-- `migrations/` — porta 1:1 do schema (`devices`, `installed_software`,
-  `maintenance_logs`) que já existia no FastAPI/Alembic, mais uma
-  tabela `profiles` (companion de `auth.users`) e RLS habilitado em
-  tudo. Aplicado no projeto remoto (`supabase db push`), confirmado
-  sem drift (`supabase db diff --linked` → "No schema changes found").
-- RLS testado de verdade: request REST sem login em `/rest/v1/devices`
-  retorna `[]` (não erro — é o Postgres filtrando as linhas via
-  política, comportamento esperado do PostgREST).
+Estado atual:
+- `supabase/migrations/` — porta 1:1 do schema (`devices`,
+  `installed_software`, `maintenance_logs`) que já existia no
+  FastAPI/Alembic, mais `profiles` (companion de `auth.users`) e RLS
+  habilitado em tudo. Aplicado no projeto remoto, sem drift
+  (`supabase db diff --linked` → "No schema changes found").
+- **A tela Ativos (`/ativos`) já fala com o Supabase**, não mais com o
+  FastAPI — `frontend/src/lib/api.ts` usa `supabase-js`
+  (`@/lib/supabase.ts`) em vez de `fetch`. As outras telas
+  (`PlaceholderPage`) continuam como estavam.
+- **Login obrigatório em todo o app** (`frontend/src/routes/login.tsx`
+  + `frontend/src/lib/{auth,route-guard}.tsx`) — sem cadastro público;
+  contas são criadas manualmente no painel do Supabase
+  (Authentication → Users) ou via API administrativa
+  (`/auth/v1/admin/users` com a `service_role` key).
+- Validado ponta a ponta via API: usuário autenticado consegue
+  criar/editar/listar devices; anônimo continua bloqueado pelo RLS
+  (`[]`); serial duplicado retorna `23505`, mapeado no frontend pra
+  mensagem amigável.
 
 Pra usar o CLI (`supabase/` já está linkado ao projeto remoto):
 
@@ -56,12 +65,18 @@ npx supabase login                   # ou --token / SUPABASE_ACCESS_TOKEN
 npx supabase db push                 # aplica migrations pendentes
 ```
 
+Variáveis do frontend (`frontend/.env.example`): `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_ANON_KEY` já vêm com o valor real do projeto como
+default no código (`frontend/src/lib/supabase.ts`) — só precisa de
+`.env` se for apontar pra outro projeto Supabase.
+
 Próximas fases (ainda não implementadas): CI/CD via GitHub Actions
 (deploy do frontend na Vercel + `supabase db push`/`functions deploy`
-automatizados), Edge Functions para lógica de negócio custom, Agent
-Windows que reporta inventário/heartbeat, observabilidade externa
-(Prometheus/Grafana num Proxmox separado, monitorando o Supabase e os
-endpoints públicos de fora — não um servidor próprio).
+automatizados), Edge Functions para lógica de negócio custom, migrar
+as demais telas, Agent Windows que reporta inventário/heartbeat,
+observabilidade externa (Prometheus/Grafana num Proxmox separado,
+monitorando o Supabase e os endpoints públicos de fora — não um
+servidor próprio), e por fim decomissionar o FastAPI/Docker.
 
 ## Como rodar
 

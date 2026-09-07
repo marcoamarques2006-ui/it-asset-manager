@@ -17,6 +17,7 @@ import { Route as AutomacoesRouteImport } from './routes/automacoes'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as ChamadosRouteImport } from './routes/chamados'
 import { Route as HistoricoRouteImport } from './routes/historico'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as SoftwaresRouteImport } from './routes/softwares'
 import { Route as VulnerabilidadesRouteImport } from './routes/vulnerabilidades'
@@ -61,6 +62,11 @@ const HistoricoRoute = HistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/catalogo': typeof CatalogoRoute
   '/chamados': typeof ChamadosRoute
   '/historico': typeof HistoricoRoute
+  '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
   '/softwares': typeof SoftwaresRoute
   '/vulnerabilidades': typeof VulnerabilidadesRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/catalogo': typeof CatalogoRoute
   '/chamados': typeof ChamadosRoute
   '/historico': typeof HistoricoRoute
+  '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
   '/softwares': typeof SoftwaresRoute
   '/vulnerabilidades': typeof VulnerabilidadesRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/catalogo': typeof CatalogoRoute
   '/chamados': typeof ChamadosRoute
   '/historico': typeof HistoricoRoute
+  '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
   '/softwares': typeof SoftwaresRoute
   '/vulnerabilidades': typeof VulnerabilidadesRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/catalogo'
     | '/chamados'
     | '/historico'
+    | '/login'
     | '/relatorios'
     | '/softwares'
     | '/vulnerabilidades'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/catalogo'
     | '/chamados'
     | '/historico'
+    | '/login'
     | '/relatorios'
     | '/softwares'
     | '/vulnerabilidades'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/catalogo'
     | '/chamados'
     | '/historico'
+    | '/login'
     | '/relatorios'
     | '/softwares'
     | '/vulnerabilidades'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   CatalogoRoute: typeof CatalogoRoute
   ChamadosRoute: typeof ChamadosRoute
   HistoricoRoute: typeof HistoricoRoute
+  LoginRoute: typeof LoginRoute
   RelatoriosRoute: typeof RelatoriosRoute
   SoftwaresRoute: typeof SoftwaresRoute
   VulnerabilidadesRoute: typeof VulnerabilidadesRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogoRoute: CatalogoRoute,
   ChamadosRoute: ChamadosRoute,
   HistoricoRoute: HistoricoRoute,
+  LoginRoute: LoginRoute,
   RelatoriosRoute: RelatoriosRoute,
   SoftwaresRoute: SoftwaresRoute,
   VulnerabilidadesRoute: VulnerabilidadesRoute,
