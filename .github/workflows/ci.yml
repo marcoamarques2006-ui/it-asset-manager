@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend (make test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configura ambiente
+        run: cp .env.example .env
+
+      - name: Sobe a stack (equivalente a make up)
+        run: docker compose up -d --build
+
+      - name: Aguarda a API responder
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API não respondeu em 60s" >&2
+          exit 1
+
+      - name: Aplica as migrations (make migrate)
+        run: docker compose exec -T api alembic upgrade head
+
+      - name: Roda os testes (make test)
+        run: docker compose exec -T api pytest -v
+
+      - name: Logs dos serviços (se algo falhar acima)
+        if: failure()
+        run: docker compose logs
+
+      - name: Derruba a stack
+        if: always()
+        run: docker compose down -v
+
+  frontend-checks:
+    name: Frontend (typecheck, lint, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instala dependências
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bunx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: bunx eslint .
+
+      - name: Testes (Vitest)
+        run: bunx vitest run
