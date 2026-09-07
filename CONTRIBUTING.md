@@ -85,3 +85,7 @@ administradores:
 - Conversas abertas no PR precisam ser resolvidas antes do merge.
 - Check `Semantic Pull Request` (título no padrão Conventional Commits)
   precisa passar antes do merge.
+- Checks `Backend (make test)` e `Frontend (typecheck, lint, testes)`
+  (CI, `.github/workflows/ci.yml`) precisam passar antes do merge —
+  branch desatualizado em relação à `main` é bloqueado até re-rodar
+  (`strict_required_status_checks_policy`).
