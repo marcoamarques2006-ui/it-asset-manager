@@ -1,0 +1,8 @@
+# <tipo>(<escopo opcional>): <descrição no imperativo, minúscula, sem ponto final>
+#
+# Corpo (opcional): o quê e por quê, não como.
+#
+# Rodapé (opcional): referências a issues, breaking changes (BREAKING CHANGE: ...)
+#
+# Tipos: feat fix docs style refactor perf test build ci chore revert
+# Ativar este template localmente: git config commit.template .gitmessage
