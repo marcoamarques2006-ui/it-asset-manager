@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.exceptions import ConflictError, NotFoundError
 from app.modules.devices.router import router as devices_router
+from app.modules.software.router import router as software_router
 
 app = FastAPI(title="IT Asset Manager", version="0.1.0")
 
@@ -40,9 +41,8 @@ def health_check():
 
 
 app.include_router(devices_router, prefix="/api/v1")
+app.include_router(software_router, prefix="/api/v1")
 
-# Ao criar os routers de software e maintenance, registre-os aqui:
-# from app.modules.software.router import router as software_router
+# Ao criar o router de maintenance, registre-o aqui:
 # from app.modules.maintenance.router import router as maintenance_router
-# app.include_router(software_router, prefix="/api/v1")
 # app.include_router(maintenance_router, prefix="/api/v1")
