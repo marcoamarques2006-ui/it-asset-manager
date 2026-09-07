@@ -1,4 +1,4 @@
-const API_URL = import.meta.env["VITE_API_URL"] ?? "http://localhost:8000";
+import { supabase } from "@/lib/supabase";
 
 export type DeviceType =
   "desktop" | "notebook" | "servidor" | "impressora" | "monitor" | "outro";
@@ -31,40 +31,42 @@ export interface DeviceInput {
   observacoes?: string | null | undefined;
 }
 
-async function parseErrorMessage(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { detail?: string };
-    return body.detail ?? `Erro ${res.status}`;
-  } catch {
-    return `Erro ${res.status}`;
+function toFriendlyError(error: { code?: string; message: string }): Error {
+  if (error.code === "23505") {
+    return new Error("Já existe um device com esse número de série");
   }
+  return new Error(error.message);
 }
 
 export async function fetchDevices(): Promise<Device[]> {
-  const res = await fetch(`${API_URL}/api/v1/devices`);
-  if (!res.ok) throw new Error(await parseErrorMessage(res));
-  return res.json();
+  const { data, error } = await supabase
+    .from("devices")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw toFriendlyError(error);
+  return data;
 }
 
 export async function createDevice(data: DeviceInput): Promise<Device> {
-  const res = await fetch(`${API_URL}/api/v1/devices`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(await parseErrorMessage(res));
-  return res.json();
+  const { data: created, error } = await supabase
+    .from("devices")
+    .insert(data)
+    .select()
+    .single();
+  if (error) throw toFriendlyError(error);
+  return created;
 }
 
 export async function updateDevice(
   id: string,
   data: DeviceInput,
 ): Promise<Device> {
-  const res = await fetch(`${API_URL}/api/v1/devices/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(await parseErrorMessage(res));
-  return res.json();
+  const { data: updated, error } = await supabase
+    .from("devices")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw toFriendlyError(error);
+  return updated;
 }

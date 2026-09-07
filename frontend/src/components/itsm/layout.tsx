@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Search, ChevronDown, Home } from "lucide-react";
+import { Search, ChevronDown, Home, LogOut } from "lucide-react";
 import { ItsmSidebar } from "./sidebar";
+import { supabase } from "@/lib/supabase";
 
 export function ItsmLayout({
   title,
@@ -29,6 +30,15 @@ export function ItsmLayout({
             <span className="grid size-7 place-items-center rounded-md bg-success-soft text-xs font-semibold text-success">
               MM
             </span>
+            <button
+              type="button"
+              title="Sair"
+              aria-label="Sair"
+              onClick={() => supabase.auth.signOut()}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogOut className="size-4" />
+            </button>
           </div>
         </header>
         <main className="flex-1 p-5">
