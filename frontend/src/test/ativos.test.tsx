@@ -4,9 +4,8 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Device } from "@/lib/api";
+import { AtivosPage } from "@/routes/ativos";
 import { renderWithQueryClient } from "@/test/query-client";
-
-import { AtivosPage } from "./ativos";
 
 // ItsmSidebar (renderizada via ItsmLayout dentro de AtivosPage) usa
 // useRouterState/Link, que só funcionam dentro de um RouterProvider real.
