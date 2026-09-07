@@ -41,10 +41,16 @@ API disponível em `http://localhost:8000`. Docs automáticas (Swagger)
 em `http://localhost:8000/docs`. Frontend disponível em
 `http://localhost:3000`.
 
-Rodar os testes:
+Rodar os testes do backend:
 
 ```bash
 make test
+```
+
+Rodar os testes do frontend (Vitest + Testing Library):
+
+```bash
+docker compose exec frontend bun run test
 ```
 
 Criar uma nova migration depois de alterar um modelo:

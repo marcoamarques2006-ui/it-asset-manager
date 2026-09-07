@@ -66,7 +66,7 @@ const statusVariant: Record<
   baixado: "destructive",
 };
 
-function AtivosPage() {
+export function AtivosPage() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["devices"],
     queryFn: fetchDevices,
