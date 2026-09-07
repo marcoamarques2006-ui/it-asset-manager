@@ -9,3 +9,4 @@ venv/
 htmlcov/
 postgres_data/
 .DS_Store
+node_modules/

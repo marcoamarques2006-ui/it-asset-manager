@@ -29,6 +29,40 @@ Quando for integrar uma tela real (ex.: `ativos.tsx`) ao backend:
 2. Ajustar os tipos TypeScript para bater com o `schemas.py` do módulo.
 3. Só então decidir se mantém, adapta ou remove a tela.
 
+## Migração para Supabase (em andamento)
+
+O projeto está migrando do backend FastAPI+Postgres+Docker (abaixo)
+para uma arquitetura serverless: Supabase (Postgres gerenciado + Auth +
+PostgREST + Realtime) com deploy do frontend na Vercel. **Essa migração
+ainda não está completa** — o FastAPI continua sendo o backend "de
+verdade" até a troca ser validada ponta a ponta (frontend ainda fala
+com a API local, não com o Supabase).
+
+O que já existe em `supabase/`:
+- `migrations/` — porta 1:1 do schema (`devices`, `installed_software`,
+  `maintenance_logs`) que já existia no FastAPI/Alembic, mais uma
+  tabela `profiles` (companion de `auth.users`) e RLS habilitado em
+  tudo. Aplicado no projeto remoto (`supabase db push`), confirmado
+  sem drift (`supabase db diff --linked` → "No schema changes found").
+- RLS testado de verdade: request REST sem login em `/rest/v1/devices`
+  retorna `[]` (não erro — é o Postgres filtrando as linhas via
+  política, comportamento esperado do PostgREST).
+
+Pra usar o CLI (`supabase/` já está linkado ao projeto remoto):
+
+```bash
+npm install                          # instala o Supabase CLI (devDependency na raiz)
+npx supabase login                   # ou --token / SUPABASE_ACCESS_TOKEN
+npx supabase db push                 # aplica migrations pendentes
+```
+
+Próximas fases (ainda não implementadas): CI/CD via GitHub Actions
+(deploy do frontend na Vercel + `supabase db push`/`functions deploy`
+automatizados), Edge Functions para lógica de negócio custom, Agent
+Windows que reporta inventário/heartbeat, observabilidade externa
+(Prometheus/Grafana num Proxmox separado, monitorando o Supabase e os
+endpoints públicos de fora — não um servidor próprio).
+
 ## Como rodar
 
 ```bash

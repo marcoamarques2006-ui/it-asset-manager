@@ -1,0 +1,11 @@
+{
+  "name": "it-asset-manager",
+  "private": true,
+  "description": "Ferramentas de repositório (Supabase CLI). backend/ e frontend/ têm seus próprios package.json/requirements.txt.",
+  "scripts": {
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "supabase": "^2.117.0"
+  }
+}
