@@ -5,9 +5,15 @@ export const Route = createFileRoute("/catalogo")({
   head: () => ({
     meta: [
       { title: "Catálogo — Servia ITSM" },
-      { name: "description", content: "Catálogo da operação de TI na plataforma Servia ITSM." },
+      {
+        name: "description",
+        content: "Catálogo da operação de TI na plataforma Servia ITSM.",
+      },
       { property: "og:title", content: "Catálogo — Servia ITSM" },
-      { property: "og:description", content: "Catálogo da operação de TI na plataforma Servia ITSM." },
+      {
+        property: "og:description",
+        content: "Catálogo da operação de TI na plataforma Servia ITSM.",
+      },
     ],
   }),
   component: () => (

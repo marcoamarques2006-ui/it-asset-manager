@@ -5,9 +5,15 @@ export const Route = createFileRoute("/alertas")({
   head: () => ({
     meta: [
       { title: "Alertas — Servia ITSM" },
-      { name: "description", content: "Alertas da operação de TI na plataforma Servia ITSM." },
+      {
+        name: "description",
+        content: "Alertas da operação de TI na plataforma Servia ITSM.",
+      },
       { property: "og:title", content: "Alertas — Servia ITSM" },
-      { property: "og:description", content: "Alertas da operação de TI na plataforma Servia ITSM." },
+      {
+        property: "og:description",
+        content: "Alertas da operação de TI na plataforma Servia ITSM.",
+      },
     ],
   }),
   component: () => (
