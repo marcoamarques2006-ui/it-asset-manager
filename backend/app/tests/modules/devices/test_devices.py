@@ -73,3 +73,59 @@ def test_delete_device_is_idempotent_in_effect(client):
     # nunca um erro de servidor — o estado final do sistema é o mesmo.
     second_delete = client.delete(f"/api/v1/devices/{device_id}")
     assert second_delete.status_code == 404
+
+def test_get_created_device_returns_device(client):
+    create = client.post(
+        "/api/v1/devices",
+        json={"hostname": "PC-GET", "tipo": "desktop"},
+    )
+    assert create.status_code == 201
+
+    device_id = create.json()["id"]
+
+    response = client.get(f"/api/v1/devices/{device_id}")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == device_id
+    assert response.json()["hostname"] == "PC-GET"
+
+
+def test_update_nonexistent_device_returns_404(client):
+    response = client.patch(
+        "/api/v1/devices/00000000-0000-0000-0000-000000000000",
+        json={"status": "manutencao"},
+    )
+
+    assert response.status_code == 404
+
+
+def test_delete_nonexistent_device_returns_404(client):
+    response = client.delete(
+        "/api/v1/devices/00000000-0000-0000-0000-000000000000"
+    )
+
+    assert response.status_code == 404
+
+
+def test_create_multiple_devices_with_different_serials(client):
+    first = client.post(
+        "/api/v1/devices",
+        json={
+            "hostname": "PC-TEST-01",
+            "tipo": "desktop",
+            "serial_number": "SN-TEST-01",
+        },
+    )
+
+    second = client.post(
+        "/api/v1/devices",
+        json={
+            "hostname": "PC-TEST-02",
+            "tipo": "notebook",
+            "serial_number": "SN-TEST-02",
+        },
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert first.json()["id"] != second.json()["id"]
