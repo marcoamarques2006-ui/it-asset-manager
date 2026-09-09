@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# So dispara depois do merge — codigo que chega aqui ja passou pelos
+# checks obrigatorios de ci.yml (branch protection cuida disso), entao
+# nao re-testamos, so publicamos.
+
+jobs:
+  deploy-frontend:
+    name: Deploy frontend (Vercel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instala dependencias
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Pull das configuracoes do projeto Vercel
+        working-directory: frontend
+        run: npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build de producao
+        working-directory: frontend
+        run: npx vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy
+        working-directory: frontend
+        run: npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-supabase:
+    name: Deploy Supabase (migrations)
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: uldqinjlhfrzunloigxw
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Link do projeto
+        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Aplica migrations pendentes
+        run: npx supabase db push

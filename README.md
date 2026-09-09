@@ -70,13 +70,44 @@ Variáveis do frontend (`frontend/.env.example`): `VITE_SUPABASE_URL` e
 default no código (`frontend/src/lib/supabase.ts`) — só precisa de
 `.env` se for apontar pra outro projeto Supabase.
 
-Próximas fases (ainda não implementadas): CI/CD via GitHub Actions
-(deploy do frontend na Vercel + `supabase db push`/`functions deploy`
-automatizados), Edge Functions para lógica de negócio custom, migrar
-as demais telas, Agent Windows que reporta inventário/heartbeat,
-observabilidade externa (Prometheus/Grafana num Proxmox separado,
-monitorando o Supabase e os endpoints públicos de fora — não um
-servidor próprio), e por fim decomissionar o FastAPI/Docker.
+Próximas fases (ainda não implementadas): Edge Functions para lógica
+de negócio custom, migrar as demais telas, Agent Windows que reporta
+inventário/heartbeat, observabilidade externa (Prometheus/Grafana num
+Proxmox separado, monitorando o Supabase e os endpoints públicos de
+fora — não um servidor próprio), e por fim decomissionar o
+FastAPI/Docker.
+
+## Deploy
+
+Produção: **https://it-asset-manager-rose.vercel.app**
+
+A cada push na `main` (ou seja, a cada PR mesclado — já passou pelos
+checks obrigatórios de `ci.yml` antes disso), `.github/workflows/deploy.yml`
+publica automaticamente:
+- **Frontend** → Vercel, via `vercel build` + `vercel deploy
+  --prebuilt --prod` (não a integração nativa Vercel↔GitHub — foi
+  desconectada de propósito, pra deploy só acontecer depois dos testes
+  passarem, não a cada push solto).
+- **Supabase** → `supabase db push` aplica migrations pendentes no
+  projeto remoto.
+
+Projeto Vercel: `it-asset-manager` (root directory = `frontend/`,
+preset de build `nitro: { preset: "vercel" }` em
+`frontend/vite.config.ts` — o default da lib
+`@lovable.dev/vite-tanstack-config` é Cloudflare, precisa desse
+override pra gerar o output certo pra Vercel).
+
+Secrets do GitHub Actions necessários (`gh secret list`):
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`,
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`.
+
+Deploy manual (sem esperar o CI), a partir de `frontend/`:
+
+```bash
+npx vercel pull --yes --environment=production --token=<VERCEL_TOKEN>
+npx vercel build --prod --token=<VERCEL_TOKEN>
+npx vercel deploy --prebuilt --prod --token=<VERCEL_TOKEN>
+```
 
 ## Como rodar
 

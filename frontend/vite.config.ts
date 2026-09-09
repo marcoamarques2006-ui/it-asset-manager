@@ -12,4 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Deploy alvo é Vercel (.github/workflows/deploy.yml), não o default
+  // cloudflare-module da lib — hard-pin pra não depender de auto-detecção.
+  nitro: { preset: "vercel" },
 });
