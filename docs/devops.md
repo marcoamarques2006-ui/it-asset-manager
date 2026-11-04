@@ -264,4 +264,16 @@ APP_VERSION=x AMBIENTE=teste docker compose -p itam-teste -f deploy/docker-compo
 
 ## Evidências
 
-*Preenchido depois das primeiras execuções do pipeline.*
+Onde ver:
+
+- Releases (uma por versão): <https://github.com/marcoamarques2006-ui/it-asset-manager/releases>
+- Imagens no GHCR: <https://github.com/marcoamarques2006-ui/it-asset-manager/pkgs/container/it-asset-manager-api>
+- Histórico de deploys por ambiente: <https://github.com/marcoamarques2006-ui/it-asset-manager/deployments>
+
+| Versão | Execução | O que mostra |
+|---|---|---|
+| v0.1.0 | [Deploy #41757155403](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41757155403) | Versão calculada (primeiro `feat`), imagem publicada e release criado. O deploy **parou em homologação** porque os secrets do environment não chegavam ao workflow reutilizável (`POSTGRES_PASSWORD` vazia), e produção nem rodou. Isso foi corrigido no #17 |
+| v0.1.1 | [Deploy #41759647813](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41759647813) | Fluxo completo: `fix` → PATCH, imagem `0.1.1` no GHCR, homologação OK, **produção OK** (`/health` → `"version":"0.1.1"`), tags `:homologacao` e `:producao` movidas |
+
+A simulação de rollback (falha injetada em produção) está registrada na
+seção seguinte.
