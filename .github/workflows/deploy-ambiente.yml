@@ -1,0 +1,83 @@
+name: Deploy de ambiente (reutilizável)
+
+# Chamado pelo CD (deploy.yml) para homologacao/producao e pelo Rollback
+# (rollback.yml). Um único caminho de deploy para tudo: o rollback manual
+# exercita exatamente o mesmo script que o deploy normal.
+#
+# O ambiente é simulado no runner (efêmero). O estado de "qual versão está
+# em cada ambiente" vive no registry, na tag móvel :<ambiente>
+# (ex.: ghcr.io/<owner>/it-asset-manager-api:producao).
+
+on:
+  workflow_call:
+    inputs:
+      ambiente:
+        description: homologacao | producao
+        type: string
+        required: true
+      versao:
+        description: versão SemVer a implantar (sem o "v")
+        type: string
+        required: true
+      imagem:
+        description: repositório da imagem no GHCR
+        type: string
+        required: true
+      sem_migracao:
+        description: troca só a api, sem rodar migrations (rollback manual)
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    name: ${{ inputs.ambiente }}
+    runs-on: ubuntu-latest
+    # Os secrets POSTGRES_PASSWORD e SECRET_KEY são do environment: cada
+    # ambiente tem os seus, e só jobs deste environment enxergam.
+    environment: ${{ inputs.ambiente }}
+    permissions:
+      contents: read
+      packages: write # mover a tag :<ambiente> no GHCR
+    env:
+      AMBIENTE: ${{ inputs.ambiente }}
+      VERSAO: ${{ inputs.versao }}
+      IMAGE: ${{ inputs.imagem }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Versão atual do ambiente (tag :${{ inputs.ambiente }})
+        id: atual
+        run: |
+          atual=""
+          if docker pull -q "$IMAGE:$AMBIENTE" >/dev/null 2>&1; then
+            atual=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE:$AMBIENTE")
+          fi
+          echo "versao=$atual" >> "$GITHUB_OUTPUT"
+          echo "$AMBIENTE hoje: ${atual:-nenhuma (primeiro deploy)} -> alvo: $VERSAO"
+
+      - name: Deploy + smoke test (rollback automático se falhar)
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SIMULAR_FALHA: ${{ vars.SIMULAR_FALHA }}
+          SEM_MIGRACAO: ${{ inputs.sem_migracao }}
+          ANTERIOR: ${{ steps.atual.outputs.versao }}
+        run: bash deploy/deploy.sh "$AMBIENTE" "$VERSAO" "$ANTERIOR"
+
+      # Só chega aqui se o deploy passou: a tag do ambiente passa a apontar
+      # para a versão nova. Se houve rollback, ela continua na anterior.
+      - name: Promove a tag :${{ inputs.ambiente }} para ${{ inputs.versao }}
+        run: docker buildx imagetools create --tag "$IMAGE:$AMBIENTE" "$IMAGE:$VERSAO"
+
+      - name: Containers do ambiente ao final
+        if: always()
+        run: |
+          docker ps -a --filter "label=com.docker.compose.project=itam-$AMBIENTE" \
+            --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'

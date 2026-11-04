@@ -1,0 +1,11 @@
+# Injeção de falha usada SÓ na simulação de rollback (docs/devops.md).
+#
+# Quando a variável SIMULAR_FALHA=true está ligada no environment do GitHub,
+# deploy/deploy.sh sobe a versão nova com este arquivo por cima do
+# docker-compose.yml: a api recebe uma credencial de banco errada (como num
+# secret rotacionado incorretamente), o /health passa a responder 503, o
+# smoke test falha e o script faz rollback para a versão anterior.
+services:
+  api:
+    environment:
+      DATABASE_URL: postgresql+psycopg://itam:credencial-incorreta@db:5432/itam

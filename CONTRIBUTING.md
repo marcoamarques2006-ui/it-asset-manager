@@ -64,6 +64,11 @@ O formato do **título do PR** é validado automaticamente
 (`.github/workflows/pr-title-lint.yml`) — PRs fora do padrão não passam no
 check obrigatório.
 
+O título do PR também **define a versão** que o merge vai gerar
+(`scripts/next-version.sh`): `feat!:` ou `BREAKING CHANGE:` → MAJOR,
+`feat:` → MINOR, qualquer outro tipo → PATCH. Ver
+[docs/devops.md](docs/devops.md#5-versionamento-semântico).
+
 ## Pull Requests
 
 - PR pequeno, focado em uma coisa só. Facilita revisão e mantém o

@@ -1,0 +1,66 @@
+# Compose dos ambientes de homologação e produção (simulados no runner do
+# GitHub Actions — ver docs/devops.md).
+#
+# Diferente do docker-compose.yml da raiz (desenvolvimento: build do código
+# local, hot reload, bind mounts), aqui só roda imagem versionada publicada
+# no registry (GHCR). Nada é buildado nem montado do disco: o que sobe é
+# exatamente o artefato que passou pelo pipeline.
+#
+# Variáveis (no CI vêm do pipeline e dos secrets do environment):
+#   IMAGE              repositório da imagem, ex.: ghcr.io/<owner>/it-asset-manager-api
+#   APP_VERSION        tag SemVer a subir, ex.: 1.4.2
+#   AMBIENTE           homologacao | producao
+#   POSTGRES_PASSWORD  secret do environment
+#   SECRET_KEY         secret do environment
+#   API_PORT           porta publicada no host (default 8000)
+#
+# Uso direto (o normal é via deploy/deploy.sh):
+#   docker compose -p itam-producao -f deploy/docker-compose.yml up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: itam
+      POSTGRES_DB: itam
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Sem "ports": o banco só é acessível pela rede interna do compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itam -d itam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Roda as migrations com a mesma imagem da versão sendo implantada e sai.
+  # A api só sobe depois que ele termina com sucesso.
+  migrate:
+    image: ${IMAGE:?defina IMAGE}:${APP_VERSION:?defina APP_VERSION}
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql+psycopg://itam:${POSTGRES_PASSWORD}@db:5432/itam
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    image: ${IMAGE}:${APP_VERSION}
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${AMBIENTE:?defina AMBIENTE}
+      APP_DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY}
+      DATABASE_URL: postgresql+psycopg://itam:${POSTGRES_PASSWORD}@db:5432/itam
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db_data:

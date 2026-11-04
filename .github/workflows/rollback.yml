@@ -1,0 +1,77 @@
+name: Rollback
+
+# Rollback MANUAL: volta um ambiente para uma versão já publicada, sem
+# build novo (a imagem X.Y.Z é imutável no GHCR). Usa o mesmo deploy
+# reutilizável do CD, então também tem smoke test — e, se a versão de
+# destino não subir, desfaz e mantém a que estava.
+#
+# O rollback AUTOMÁTICO não passa por aqui: acontece dentro do próprio
+# deploy (deploy/deploy.sh) quando o smoke test da versão nova falha.
+#
+# Actions -> Rollback -> Run workflow (ou: gh workflow run rollback.yml
+#   -f ambiente=producao -f versao=1.2.3)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: Ambiente
+        type: choice
+        options: [producao, homologacao]
+        default: producao
+      versao:
+        description: Versão de destino (SemVer, ex. 1.2.3)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  valida:
+    name: Valida a versão de destino
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      imagem: ${{ steps.v.outputs.imagem }}
+    steps:
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: v
+        env:
+          VERSAO: ${{ inputs.versao }}
+        run: |
+          if [[ ! "$VERSAO" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Versão inválida: '$VERSAO' (esperado X.Y.Z, sem o v)"
+            exit 1
+          fi
+          imagem="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/it-asset-manager-api"
+          if ! docker buildx imagetools inspect "$imagem:$VERSAO" >/dev/null; then
+            echo "::error::A imagem $imagem:$VERSAO não existe no registry"
+            exit 1
+          fi
+          echo "imagem=$imagem" >> "$GITHUB_OUTPUT"
+
+  rollback:
+    name: Rollback
+    needs: valida
+    uses: ./.github/workflows/deploy-ambiente.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      ambiente: ${{ inputs.ambiente }}
+      versao: ${{ inputs.versao }}
+      imagem: ${{ needs.valida.outputs.imagem }}
+      sem_migracao: true

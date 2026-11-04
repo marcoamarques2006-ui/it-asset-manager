@@ -13,8 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Nenhuma senha no repositório: o banco efêmero do CI recebe uma
+      # senha aleatória gerada a cada execução.
       - name: Configura ambiente
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+          sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
+
+      - name: Build da imagem de produção (estágio runtime do Dockerfile)
+        run: docker build --target runtime --build-arg APP_VERSION=ci -t itam-api:ci ./backend
 
       - name: Sobe a stack (equivalente a make up)
         run: docker compose up -d --build
