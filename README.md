@@ -101,7 +101,21 @@ Secrets do GitHub Actions necessários (`gh secret list`):
 `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`,
 `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`.
 
-Deploy manual (sem esperar o CI), a partir de `frontend/`:
+### API em container (GHCR + homologação/produção)
+
+O mesmo workflow também publica a **API** como imagem versionada:
+
+1. calcula a versão SemVer a partir do título do PR;
+2. publica `ghcr.io/marcoamarques2006-ui/it-asset-manager-api:X.Y.Z` e
+   cria o release `vX.Y.Z`;
+3. implanta em **homologação** e depois em **produção** (ambientes
+   simulados no runner), com smoke test e rollback automático.
+
+O rollback manual fica em *Actions → Rollback*. Os detalhes de
+Dockerfile, compose, segredos, versionamento e rollback estão em
+[docs/devops.md](docs/devops.md).
+
+Deploy manual do frontend (sem esperar o CI), a partir de `frontend/`:
 
 ```bash
 npx vercel pull --yes --environment=production --token=<VERCEL_TOKEN>
@@ -112,18 +126,21 @@ npx vercel deploy --prebuilt --prod --token=<VERCEL_TOKEN>
 ## Como rodar
 
 ```bash
-cp .env.example .env
-make up          # build + sobe api (porta 8000) + postgres (porta 5432)
-make migrate     # aplica as migrations (primeira vez e a cada nova revision)
+cp .env.example .env   # preencha POSTGRES_PASSWORD (obrigatória) e SECRET_KEY
+make up                # build + postgres (5432) + migrations + api (8000) + frontend (3000)
 ```
 
-API disponível em `http://localhost:8000`. Docs automáticas (Swagger)
-em `http://localhost:8000/docs`. Frontend disponível em
-`http://localhost:3000`.
+O serviço `migrate` aplica as migrations sozinho antes de a api subir.
+`make migrate` continua existindo, para reaplicar depois de criar uma
+revision nova.
 
-**Antes de rodar `make migrate`**, os endpoints que tocam o banco
-(ex.: `GET /api/v1/devices`) retornam 500 — as tabelas ainda não
-existem. Isso é esperado, não é bug.
+API disponível em `http://localhost:8000`. Docs automáticas (Swagger)
+em `http://localhost:8000/docs`. `GET /health` informa a versão e se o
+banco está acessível. Frontend disponível em `http://localhost:3000`.
+
+O `.env` não é commitado e o `.env.example` não traz nenhuma senha:
+cada dev escolhe a sua. Se você já tinha um `.env` antigo, ele continua
+funcionando.
 
 Na primeira vez que sobe (`make up`), o container do frontend roda
 `bun install` sozinho antes de subir o dev server — leva alguns

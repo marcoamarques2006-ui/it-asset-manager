@@ -1,32 +1,55 @@
-version: "3.9"
+# Ambiente de DESENVOLVIMENTO: build do código local (estágio "dev" do
+# backend/Dockerfile), hot reload e bind mounts.
+#
+#   cp .env.example .env   # e preencha POSTGRES_PASSWORD
+#   make up                # db + migrations + api (8000) + frontend (3000)
+#
+# Homologação/produção usam deploy/docker-compose.yml, que só roda a
+# imagem versionada do registry.
 
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-itam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env (veja .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-itam}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # Aplica as migrations e sai; a api só sobe depois que ele termina.
+  migrate:
+    build:
+      context: ./backend
+      target: dev
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-itam}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-itam}
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/migrations:/app/migrations
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
   api:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      target: dev
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-itam}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-itam}
     ports:
       - "8000:8000"
     volumes:
@@ -35,7 +58,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
 
   frontend:
     image: oven/bun:1

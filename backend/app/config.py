@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_debug: bool = True
     secret_key: str = "change-me"
+    # Versão SemVer da imagem; vem do build (ARG APP_VERSION no Dockerfile).
+    app_version: str = "dev"
 
     database_url: str
 
