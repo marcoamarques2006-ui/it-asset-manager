@@ -71,6 +71,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Instala o Supabase CLI na versao fixada no package-lock.json. Sem
+      # isso o npx baixava sempre a ultima versao (a 3.0.0 passou a tentar
+      # o banco local no db push).
+      - name: Instala o Supabase CLI (versao do package-lock)
+        run: npm ci
+
       - name: Link do projeto
         run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
 

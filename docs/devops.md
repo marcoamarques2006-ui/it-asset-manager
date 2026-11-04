@@ -280,6 +280,14 @@ Onde ver:
 | — | [Rollback #41761112311](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41761112311) | **Rollback manual** de produção `0.1.2 → 0.1.1`, sem build e sem migrations, com smoke test |
 | — | [Rollback #41761259384](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41761259384) | Rollback para versão inexistente (`9.9.9`) é recusado na validação, sem tocar no ambiente |
 
+> Nas execuções acima, os jobs `Deploy frontend (Vercel)` e `Deploy
+> Supabase` aparecem com falha. Eles estão fora da trilha da API: os
+> tokens de acesso dos dois serviços tinham vencido e o projeto Supabase
+> estava pausado por falta de uso. Em 04/11/2026 os tokens foram
+> renovados (nos secrets do repositório), o projeto foi restaurado e o
+> job do Supabase passou a usar o CLI na versão fixada no
+> `package-lock.json`.
+
 ### Simulação documentada de rollback (v0.1.2)
 
 Roteiro executado em 04/11/2026, conforme
