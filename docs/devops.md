@@ -275,5 +275,54 @@ Onde ver:
 | v0.1.0 | [Deploy #41757155403](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41757155403) | Versão calculada (primeiro `feat`), imagem publicada e release criado. O deploy **parou em homologação** porque os secrets do environment não chegavam ao workflow reutilizável (`POSTGRES_PASSWORD` vazia), e produção nem rodou. Isso foi corrigido no #17 |
 | v0.1.1 | [Deploy #41759647813](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41759647813) | Fluxo completo: `fix` → PATCH, imagem `0.1.1` no GHCR, homologação OK, **produção OK** (`/health` → `"version":"0.1.1"`), tags `:homologacao` e `:producao` movidas |
 
-A simulação de rollback (falha injetada em produção) está registrada na
-seção seguinte.
+| v0.1.2 | [Deploy #41760259073, tentativa 1](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41760259073/attempts/1) | **Simulação de falha + rollback automático** (detalhes abaixo) |
+| v0.1.2 | [Deploy #41760259073, tentativa 2](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41760259073/attempts/2) | Falha desligada, *Re-run failed jobs*: produção `0.1.1 → 0.1.2` OK |
+| — | [Rollback #41761112311](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41761112311) | **Rollback manual** de produção `0.1.2 → 0.1.1`, sem build e sem migrations, com smoke test |
+| — | [Rollback #41761259384](https://github.com/marcoamarques2006-ui/it-asset-manager/actions/runs/41761259384) | Rollback para versão inexistente (`9.9.9`) é recusado na validação, sem tocar no ambiente |
+
+### Simulação documentada de rollback (v0.1.2)
+
+Roteiro executado em 04/11/2026, conforme
+[Como simular uma falha](#como-simular-uma-falha):
+
+1. Produção estava na **v0.1.1** (tag `:producao`).
+2. `gh variable set SIMULAR_FALHA --env producao --body true`, só no
+   environment de produção.
+3. Merge do #18 → a versão calculada foi **v0.1.2** (`docs:` → PATCH), com
+   imagem publicada e release criado.
+4. Homologação (sem a variável): `0.1.1 → 0.1.2` **OK**.
+5. Produção: a v0.1.2 subiu com a credencial de banco errada, e o
+   pipeline reagiu sozinho:
+
+```
+producao hoje: 0.1.1 -> alvo: 0.1.2
+[02:23:33] == Ambiente atual: producao na v0.1.1 (simulado) ==
+[02:23:50] health OK: {"status":"ok","database":"ok","version":"0.1.1"} (HTTP 200)
+[02:23:50] dado de controle gravado na v0.1.1 (serial CTRL-producao-1793759013)
+[02:23:50] !! SIMULAR_FALHA=true: a v0.1.2 vai subir com a falha de deploy/falha-simulada.yml
+[02:23:50] == Deploy: producao -> v0.1.2 ==
+[02:24:56] health não ficou OK na v0.1.2 em 60s (última resposta: {"status":"error","database":"unreachable","version":"0.1.2"} (HTTP 503))
+[02:24:56] !! FALHA no deploy da v0.1.2 em producao
+[02:24:56] == ROLLBACK: producao -> v0.1.1 ==
+[02:24:58] health OK: {"status":"ok","database":"ok","version":"0.1.1"} (HTTP 200)
+[02:24:58] ROLLBACK OK: producao de volta na v0.1.1, dado de controle preservado
+```
+
+   O job terminou vermelho, a tag `:producao` **continuou na v0.1.1** e o
+   container final era `it-asset-manager-api:0.1.1`. A detecção levou
+   cerca de 66 s (o tempo de espera do smoke test) e a volta, cerca de 2 s.
+6. `gh variable delete SIMULAR_FALHA --env producao` e *Re-run failed
+   jobs*: produção `0.1.1 → 0.1.2` **OK**, e a tag `:producao` foi movida.
+7. Rollback manual pelo workflow `Rollback` (`versao=0.1.1`):
+
+```
+producao hoje: 0.1.2 -> alvo: 0.1.1
+[02:30:20] SEM_MIGRACAO=true: troca só a api, sem rodar migrations
+[02:30:20] == Deploy: producao -> v0.1.1 ==
+[02:30:25] health OK: {"status":"ok","database":"ok","version":"0.1.1"} (HTTP 200)
+[02:30:25] smoke test OK na v0.1.1
+[02:30:25] DEPLOY OK: producao está na v0.1.1
+```
+
+O merge deste registro gera a v0.1.3, que sai da v0.1.1 em produção
+pelo fluxo normal.
