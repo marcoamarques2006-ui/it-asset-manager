@@ -153,9 +153,10 @@ credencial fica e quem a usa:
 
 Além disso:
 
-- Os jobs de deploy da API **não** recebem os tokens de Vercel/Supabase:
-  não há `secrets: inherit`, então eles só veem os secrets do próprio
-  environment.
+- Os jobs de deploy declaram `environment:`, então só eles leem os
+  secrets de `homologacao`/`producao`. O workflow reutilizável é chamado
+  com `secrets: inherit`, que é a forma de esses secrets de environment
+  chegarem até ele.
 - O [`.env.example`](../.env.example) só tem nomes de variáveis, com
   `POSTGRES_PASSWORD` e `SECRET_KEY` vazias. Os dois composes usam
   `${VAR:?}` e se recusam a subir sem elas.
