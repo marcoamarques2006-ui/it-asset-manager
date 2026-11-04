@@ -75,3 +75,4 @@ jobs:
       versao: ${{ inputs.versao }}
       imagem: ${{ needs.valida.outputs.imagem }}
       sem_migracao: true
+    secrets: inherit # secrets do environment (POSTGRES_PASSWORD/SECRET_KEY)

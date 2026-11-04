@@ -179,9 +179,9 @@ jobs:
       ambiente: homologacao
       versao: ${{ needs.versao.outputs.versao }}
       imagem: ${{ needs.versao.outputs.imagem }}
-    # Sem "secrets: inherit" de proposito: o job so precisa dos secrets do
-    # proprio environment (resolvidos la dentro), nao dos tokens de
-    # Vercel/Supabase do repositorio.
+    # Sem "inherit" o workflow chamado nao enxerga os secrets do environment
+    # (POSTGRES_PASSWORD/SECRET_KEY de homologacao/producao).
+    secrets: inherit
 
   producao:
     name: API - producao
@@ -194,3 +194,4 @@ jobs:
       ambiente: producao
       versao: ${{ needs.versao.outputs.versao }}
       imagem: ${{ needs.versao.outputs.imagem }}
+    secrets: inherit
